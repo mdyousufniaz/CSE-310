@@ -1,0 +1,132 @@
+#ifndef SCOPE_TABLE_HPP
+#define SCOPE_TABLE_HPP
+
+#include "symbol_info.hpp"
+#include "hash_functions.hpp"
+
+using namespace std;
+
+string get_tabs(unsigned int tab_len) {
+    const string TAB = "    ";
+    string result = "";
+
+    for (unsigned int i = 0; i < tab_len; i++) result += TAB;
+    return result;
+}
+
+template <typename NameType = string, typename TypeType = string>
+class ScopeTable {
+
+    private:
+    static unsigned int scope_counter;
+
+    unsigned int scope_id;
+    SymbolInfo<NameType, TypeType> **hashmap;
+    unsigned int num_buckets;
+    ScopeTable* parent_scope;
+    unsigned int (*hashFunc) (string);
+
+
+    unsigned int hash(string name) {
+        return hashFunc(name) % num_buckets;
+    }
+
+    public:
+
+    ScopeTable(unsigned int num_buckets, ScopeTable* parent, unsigned int hash_func_num)
+        :   num_buckets(num_buckets), parent_scope(parent) {
+            this->hashmap = new SymbolInfo<NameType, TypeType>*[num_buckets];
+            for (unsigned int i = 0; i < num_buckets; i++) hashmap[i] = nullptr;
+
+            hashFunc = getHashFunc(hash_func_num);
+            scope_id = ++scope_counter;
+            cout << get_tabs(1) << "ScopeTable# " << scope_id  << " created" << endl;
+        }
+
+    ~ScopeTable() {
+        for (unsigned int i = 0; i < num_buckets; i++) {
+            SymbolInfo<NameType, TypeType>* current = hashmap[i];
+
+            while (current != nullptr) {
+                SymbolInfo<NameType, TypeType>* temp = current;
+                current = current->getNext();
+                delete temp;
+            }
+        }
+        
+        delete[] hashmap;
+    }
+
+    ScopeTable<NameType, TypeType>* getParentScope() {
+        return this->parent_scope;
+    }
+
+    bool insert(SymbolInfo<NameType, TypeType>* symbol) {
+        if (lookUp(symbol->getName()) != nullptr) return false;
+
+        unsigned int hash_value = hash(symbol->getName());
+        symbol->setNext(hashmap[hash_value]);
+        hashmap[hash_value] = symbol;
+
+        return true;
+    }
+
+    SymbolInfo<NameType, TypeType>* lookUp(string name) {
+        unsigned int hash_value = hash(name);
+        SymbolInfo<NameType, TypeType>* current = hashmap[hash_value];
+
+        while (current != nullptr) {
+            if (current->getName() == name) return current;
+            current = current->getNext();
+        }
+
+        return nullptr;
+    }
+
+    bool Delete(const string& name) {
+        unsigned int hash_value = hash(name);
+        SymbolInfo<NameType, TypeType>* current = hashmap[hash_value];
+        SymbolInfo<NameType, TypeType>* prev = nullptr;
+    
+        while (current != nullptr) {
+            if (current->getName() == name) {
+                if (prev == nullptr) {
+                    hashmap[hash_value] = current->getNext();
+                } else {
+                    prev->setNext(current->getNext());
+                }
+
+                delete current;
+                return true;
+            }
+            prev = current;
+            current = current->getNext();
+        }
+    
+        return false;
+    }
+
+    void print(unsigned int level) const {
+        string tabs = get_tabs(level);
+
+        cout << tabs << "ScopeTable# " << scope_id << endl;
+
+        for (unsigned int i = 0; i < num_buckets; ++i) {
+            cout << tabs << i + 1 << "-->"; // print bucket index (1-based)
+    
+            SymbolInfo<NameType, TypeType>* current = hashmap[i];
+            while (current != nullptr) {
+                cout << " " << *current; // relies on your overloaded <<
+                current = current->getNext();
+            }
+            cout << endl;
+        }
+    }
+    
+};
+
+template <typename NameType, typename TypeType>
+unsigned int ScopeTable<NameType, TypeType>:: scope_counter = 0;
+
+
+#endif
