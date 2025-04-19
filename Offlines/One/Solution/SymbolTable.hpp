@@ -46,7 +46,7 @@ class SymbolTable {
         return curr_scope_table->insert(symbol);
     }
 
-    bool Remove(const string& name) {
+    bool remove(const string& name) {
         return curr_scope_table->Delete(name);
     }
 
@@ -57,6 +57,8 @@ class SymbolTable {
             if (symbol != nullptr) return symbol;
             temp = temp->getParentScope();
         }
+
+        cout << get_tabs(1) << "'" << name << "' not found in any of the ScopeTables" << endl;
 
         return nullptr;
     }

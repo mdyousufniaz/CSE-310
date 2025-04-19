@@ -27,10 +27,8 @@ int main() {
     // st.print();
 
     SymbolTable<> ST(7);
-    ST.enterScope();
-    ST.enterScope();
+    ST.insert(new SymbolInfo<>("==", "INT"));
+    ST.remove("==");
     ST.printCurrScope();
-    ST.printAllScope();
-
     return 0;
 }
