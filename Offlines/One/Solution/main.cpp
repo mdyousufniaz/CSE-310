@@ -2,7 +2,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "SymbolTable.hpp"
+#include "symbol_table.hpp"
 
 using namespace std;
 
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
     unsigned int num_buckets;
     input_file >> num_buckets;
 
-    SymbolTable<>* symbol_table = new SymbolTable<>(num_buckets);
+    SymbolTable* symbol_table = new SymbolTable(num_buckets);
 
     string line;
     getline(input_file, line);
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
                     type += "}";
                 }
 
-                symbol_table->insert(new SymbolInfo<>(name, type));
+                symbol_table->insert(new SymbolInfo(name, type));
                 break;
             }
                 

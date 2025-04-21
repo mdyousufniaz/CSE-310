@@ -3,46 +3,43 @@
 
 #include "scope_table.hpp"
 
-
-
-template <typename NameType = string, typename TypeType = string>
 class SymbolTable {
 
     private:
-    ScopeTable<NameType, TypeType>* curr_scope_table;
+    ScopeTable* curr_scope_table;
     unsigned int num_buckets;
     unsigned int hash_func_num;
 
     public:
 
-    SymbolTable(unsigned int num_buckets, ScopeTable<NameType, TypeType>* parent = nullptr, unsigned int hash_func_num = 1) 
+    SymbolTable(unsigned int num_buckets, unsigned int hash_func_num = 1) 
         :   num_buckets(num_buckets), hash_func_num(hash_func_num) {
-        curr_scope_table = new ScopeTable<NameType, TypeType>(num_buckets, parent, hash_func_num);
+        curr_scope_table = new ScopeTable(num_buckets, hash_func_num, nullptr);
     }
 
     ~SymbolTable() {
         while (curr_scope_table != nullptr) {
-            ScopeTable<NameType, TypeType>* temp = curr_scope_table;
+            ScopeTable* temp = curr_scope_table;
             curr_scope_table = curr_scope_table->getParentScope();
             delete temp;
         }
     }
 
     void enterScope() {
-        curr_scope_table = new ScopeTable<NameType, TypeType>(
+        curr_scope_table = new ScopeTable(
             this->num_buckets,
-            this->curr_scope_table,
-            this->hash_func_num
+            this->hash_func_num,
+            this->curr_scope_table
         );
     }
 
     void exitScope() {
-        ScopeTable<NameType, TypeType>* temp = curr_scope_table;
+        ScopeTable* temp = curr_scope_table;
         curr_scope_table = curr_scope_table->getParentScope();
         delete temp;
     }
 
-    bool insert(SymbolInfo<NameType, TypeType>* symbol) {
+    bool insert(SymbolInfo* symbol) {
         return curr_scope_table->insert(symbol);
     }
 
@@ -50,16 +47,15 @@ class SymbolTable {
         return curr_scope_table->Delete(name);
     }
 
-    SymbolInfo<NameType, TypeType>* lookUp(const string& name) {
-        ScopeTable<NameType, TypeType>* temp = curr_scope_table;
+    SymbolInfo* lookUp(const string& name) {
+        ScopeTable* temp = curr_scope_table;
         while (temp != nullptr) {
-            SymbolInfo<NameType, TypeType>* symbol = temp->lookUp(name);
+            SymbolInfo* symbol = temp->lookUp(name);
             if (symbol != nullptr) return symbol;
             temp = temp->getParentScope();
         }
 
         cout << get_tabs(1) << "'" << name << "' not found in any of the ScopeTables" << endl;
-
         return nullptr;
     }
 
@@ -68,7 +64,7 @@ class SymbolTable {
     }
 
     void printAllScope() const {
-        ScopeTable<NameType, TypeType>* temp = curr_scope_table;
+        ScopeTable* temp = curr_scope_table;
         unsigned int level = 1;
         while (temp != nullptr) {
             temp->print(level++);

@@ -14,14 +14,13 @@ string get_tabs(unsigned int tab_len) {
     return result;
 }
 
-template <typename NameType = string, typename TypeType = string>
 class ScopeTable {
 
     private:
     static unsigned int scope_counter;
 
     unsigned int scope_id;
-    SymbolInfo<NameType, TypeType> **hashmap;
+    SymbolInfo **hashmap;
     unsigned int num_buckets;
     ScopeTable* parent_scope;
     unsigned int (*hashFunc) (string);
@@ -31,9 +30,9 @@ class ScopeTable {
         return hashFunc(name) % num_buckets;
     }
 
-    string get_pos(SymbolInfo<NameType, TypeType>* symbol) {
+    string get_pos(SymbolInfo* symbol) {
         unsigned int hash_value = hash(symbol->getName());
-        SymbolInfo<NameType, TypeType>* current = hashmap[hash_value];
+        SymbolInfo* current = hashmap[hash_value];
         unsigned int pos = 1;
 
         while (current != nullptr) {
@@ -47,9 +46,9 @@ class ScopeTable {
 
     public:
 
-    ScopeTable(unsigned int num_buckets, ScopeTable* parent, unsigned int hash_func_num)
+    ScopeTable(unsigned int num_buckets, unsigned int hash_func_num, ScopeTable* parent)
         :   num_buckets(num_buckets), parent_scope(parent) {
-            this->hashmap = new SymbolInfo<NameType, TypeType>*[num_buckets];
+            this->hashmap = new SymbolInfo*[num_buckets];
             for (unsigned int i = 0; i < num_buckets; i++) hashmap[i] = nullptr;
 
             hashFunc = getHashFunc(hash_func_num);
@@ -59,10 +58,10 @@ class ScopeTable {
 
     ~ScopeTable() {
         for (unsigned int i = 0; i < num_buckets; i++) {
-            SymbolInfo<NameType, TypeType>* current = hashmap[i];
+            SymbolInfo* current = hashmap[i];
 
             while (current != nullptr) {
-                SymbolInfo<NameType, TypeType>* temp = current;
+                SymbolInfo* temp = current;
                 current = current->getNext();
                 delete temp;
             }
@@ -72,11 +71,11 @@ class ScopeTable {
         cout << get_tabs(1) << "ScopeTable# " << scope_id  << " removed" << endl;
     }
 
-    ScopeTable<NameType, TypeType>* getParentScope() {
+    ScopeTable* getParentScope() {
         return this->parent_scope;
     }
 
-    bool insert(SymbolInfo<NameType, TypeType>* symbol) {
+    bool insert(SymbolInfo* symbol) {
         string tabs = get_tabs(1);
         if (lookUp(symbol->getName(), false) != nullptr) {
             cout << tabs << "'" << symbol->getName() << "' already exists in the current ScopeTable" << endl;
@@ -91,9 +90,9 @@ class ScopeTable {
         return true;
     }
 
-    SymbolInfo<NameType, TypeType>* lookUp(string name, bool print_log = true) {
+    SymbolInfo* lookUp(string name, bool print_log = true) {
         unsigned int hash_value = hash(name);
-        SymbolInfo<NameType, TypeType>* current = hashmap[hash_value];
+        SymbolInfo* current = hashmap[hash_value];
         string tabs = get_tabs(1);
 
         while (current != nullptr) {
@@ -111,8 +110,8 @@ class ScopeTable {
 
     bool Delete(const string& name) {
         unsigned int hash_value = hash(name);
-        SymbolInfo<NameType, TypeType>* current = hashmap[hash_value];
-        SymbolInfo<NameType, TypeType>* prev = nullptr;
+        SymbolInfo* current = hashmap[hash_value];
+        SymbolInfo* prev = nullptr;
         string tabs = get_tabs(1);
         string pos;
 
@@ -142,11 +141,11 @@ class ScopeTable {
         cout << tabs << "ScopeTable# " << scope_id << endl;
 
         for (unsigned int i = 0; i < num_buckets; ++i) {
-            cout << tabs << i + 1 << "-->"; // print bucket index (1-based)
+            cout << tabs << i + 1 << "-->"; 
     
-            SymbolInfo<NameType, TypeType>* current = hashmap[i];
+            SymbolInfo* current = hashmap[i];
             while (current != nullptr) {
-                cout << " " << *current; // relies on your overloaded <<
+                cout << " " << *current; 
                 current = current->getNext();
             }
             cout << endl;
@@ -155,8 +154,7 @@ class ScopeTable {
     
 };
 
-template <typename NameType, typename TypeType>
-unsigned int ScopeTable<NameType, TypeType>:: scope_counter = 0;
+unsigned int ScopeTable:: scope_counter = 0;
 
 
 #endif

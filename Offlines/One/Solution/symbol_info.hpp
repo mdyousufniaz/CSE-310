@@ -4,31 +4,32 @@
 #include <iostream>
 #include <string>
 
-template <typename NameType = std::string, typename TypeType = std::string>
+using namespace std;
+
 class SymbolInfo {
 
     private:
-    NameType name;
-    TypeType type;
+    string name;
+    string type;
     SymbolInfo* next_symbol_info = nullptr;
 
     public:
-    SymbolInfo(const NameType& name, const TypeType& type)
+    SymbolInfo(const string& name, const string& type)
         : name(name), type(type) {}
 
-    NameType getName() const {
+    string getName() const {
         return this->name;
     }
 
-    void setName(const NameType& name) {
+    void setName(const string& name) {
         this->name = name;
     }
 
-    TypeType getType() const {
+    string getType() const {
         return this->type;
     }
 
-    void setType(const TypeType& type) {
+    void setType(const string& type) {
         this->type = type;
     }
 
@@ -40,7 +41,7 @@ class SymbolInfo {
         this->next_symbol_info = next_sym_info;
     } 
 
-    friend std::ostream& operator<<(std::ostream& os, const SymbolInfo<NameType, TypeType>& sym_info) {
+    friend std::ostream& operator<<(std::ostream& os, const SymbolInfo& sym_info) {
         os << "<" << sym_info.getName() << "," << sym_info.getType() << ">";
         return os;
     }
