@@ -4,4 +4,4 @@
 filename=${1}
 
 # Compile the corresponding .cpp file
-g++ -fsanitize=address "$filename.cpp" -o "$filename"
+g++ -fsanitize=address -g "$filename.cpp" -o "$filename"

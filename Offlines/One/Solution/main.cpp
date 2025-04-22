@@ -7,7 +7,7 @@
 using namespace std;
 
 void mismatchCommand(char cmd) {
-    cout << get_tabs(1) << "Number of parameters mismatch for the command" << cmd << endl;
+    cout << get_tabs(1) << "Number of parameters mismatch for the command " << cmd << endl;
 }
 
 int main(int argc, char* argv[]) {

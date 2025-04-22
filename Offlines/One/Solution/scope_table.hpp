@@ -7,10 +7,9 @@
 using namespace std;
 
 string get_tabs(unsigned int tab_len) {
-    const string TAB = "    ";
     string result = "";
 
-    for (unsigned int i = 0; i < tab_len; i++) result += TAB;
+    for (unsigned int i = 0; i < tab_len; i++) result += '\t';
     return result;
 }
 
@@ -23,26 +22,29 @@ class ScopeTable {
     SymbolInfo **hashmap;
     unsigned int num_buckets;
     ScopeTable* parent_scope;
-    unsigned int (*hashFunc) (string);
+    unsigned int (*hashFunc) (string, unsigned int);
+    unsigned int collision_num = 0;
 
 
     unsigned int hash(string name) {
-        return hashFunc(name) % num_buckets;
+        return hashFunc(name, num_buckets);
     }
 
-    string get_pos(SymbolInfo* symbol) {
-        unsigned int hash_value = hash(symbol->getName());
+    string get_pos(const string& name) {
+        unsigned int hash_value = hash(name);
         SymbolInfo* current = hashmap[hash_value];
         unsigned int pos = 1;
 
         while (current != nullptr) {
-            if (current->getName() == symbol->getName()) return to_string(hash_value + 1) + ", " + to_string(pos);
+            if (current->getName() == name) return to_string(hash_value + 1) + ", " + to_string(pos);
             current = current->getNext();
             pos++;
         }
 
-        return nullptr;
+        return "";
     }
+
+    
 
     public:
 
@@ -77,29 +79,35 @@ class ScopeTable {
 
     bool insert(SymbolInfo* symbol) {
         string tabs = get_tabs(1);
-        if (lookUp(symbol->getName(), false) != nullptr) {
-            cout << tabs << "'" << symbol->getName() << "' already exists in the current ScopeTable" << endl;
+        string symbol_name = symbol->getName();
+        if (get_pos(symbol_name) != "") {
+            cout << tabs << "'" << symbol_name << "' already exists in the current ScopeTable" << endl;
+            delete symbol;
             return false;
         }
 
-        unsigned int hash_value = hash(symbol->getName());
-        symbol->setNext(hashmap[hash_value]);
-        hashmap[hash_value] = symbol;
+        unsigned int hash_value = hash(symbol_name);
 
-        cout << tabs << "Inserted in ScopeTable# " << this->scope_id << " at position " << get_pos(symbol) << endl;
+        SymbolInfo* temp = hashmap[hash_value];
+        if (temp == nullptr) hashmap[hash_value] = symbol;
+        else {
+            while (temp->getNext() != nullptr) temp = temp->getNext();
+            temp->setNext(symbol);
+        }
+
+
+        cout << tabs << "Inserted in ScopeTable# " << this->scope_id << " at position " << get_pos(symbol->getName()) << endl;
         return true;
     }
 
-    SymbolInfo* lookUp(string name, bool print_log = true) {
+    SymbolInfo* lookUp(string name) {
         unsigned int hash_value = hash(name);
         SymbolInfo* current = hashmap[hash_value];
         string tabs = get_tabs(1);
 
         while (current != nullptr) {
             if (current->getName() == name) { 
-                if (print_log) {
-                    cout << tabs << "'" << name << "' found in ScopeTable# " << this->scope_id << " at position " << get_pos(current) << endl;
-                }
+                cout << tabs << "'" << name << "' found in ScopeTable# " << this->scope_id << " at position " << get_pos(current->getName()) << endl;
                 return current;
             }
             current = current->getNext();
@@ -117,7 +125,7 @@ class ScopeTable {
 
         while (current != nullptr) {
             if (current->getName() == name) {
-                pos = get_pos(current);
+                pos = get_pos(current->getName());
                 if (prev == nullptr) {
                     hashmap[hash_value] = current->getNext();
                 } else {
@@ -148,7 +156,7 @@ class ScopeTable {
                 cout << " " << *current; 
                 current = current->getNext();
             }
-            cout << endl;
+            cout << ' ' << endl;
         }
     }
     
