@@ -42,7 +42,7 @@ class SymbolInfo {
     } 
 
     friend std::ostream& operator<<(std::ostream& os, const SymbolInfo& sym_info) {
-        os << "<" << sym_info.getName() << "," << sym_info.getType() << "> ";
+        os << "<" << sym_info.getName() << "," << sym_info.getType() << ">";
         return os;
     }
 

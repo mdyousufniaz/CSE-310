@@ -18,13 +18,10 @@ class ScopeTable {
     private:
     static unsigned int scope_counter;
 
-    unsigned int scope_id;
     SymbolInfo **hashmap;
     unsigned int num_buckets;
     ScopeTable* parent_scope;
     unsigned int (*hashFunc) (string, unsigned int);
-    unsigned int collision_num = 0;
-
 
     unsigned int hash(string name) {
         return hashFunc(name, num_buckets);
@@ -47,6 +44,8 @@ class ScopeTable {
     
 
     public:
+    unsigned int scope_id;
+    unsigned int collision_num = 0;
 
     ScopeTable(unsigned int num_buckets, unsigned int hash_func_num, ScopeTable* parent)
         :   num_buckets(num_buckets), parent_scope(parent) {
@@ -91,10 +90,10 @@ class ScopeTable {
         SymbolInfo* temp = hashmap[hash_value];
         if (temp == nullptr) hashmap[hash_value] = symbol;
         else {
+            collision_num++;
             while (temp->getNext() != nullptr) temp = temp->getNext();
             temp->setNext(symbol);
         }
-
 
         cout << tabs << "Inserted in ScopeTable# " << this->scope_id << " at position " << get_pos(symbol->getName()) << endl;
         return true;
@@ -149,16 +148,18 @@ class ScopeTable {
         cout << tabs << "ScopeTable# " << scope_id << endl;
 
         for (unsigned int i = 0; i < num_buckets; ++i) {
-            cout << tabs << i + 1 << "-->"; 
+            cout << tabs << i + 1 << "--> "; 
     
             SymbolInfo* current = hashmap[i];
             while (current != nullptr) {
-                cout << " " << *current; 
+                cout << *current << ' '; 
                 current = current->getNext();
             }
-            cout << ' ' << endl;
+            cout << endl;
         }
     }
+
+
     
 };
 

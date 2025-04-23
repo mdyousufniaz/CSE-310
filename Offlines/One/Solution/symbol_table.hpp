@@ -9,6 +9,7 @@ class SymbolTable {
     ScopeTable* curr_scope_table;
     unsigned int num_buckets;
     unsigned int hash_func_num;
+    unsigned int prev_collisions = 0;
 
     public:
 
@@ -34,6 +35,7 @@ class SymbolTable {
     }
 
     void exitScope() {
+        prev_collisions += curr_scope_table->collision_num;
         ScopeTable* temp = curr_scope_table;
         curr_scope_table = curr_scope_table->getParentScope();
         delete temp;
@@ -70,6 +72,17 @@ class SymbolTable {
             temp->print(level++);
             temp = temp->getParentScope();
         }
+    }
+
+    float mean_collision_ratio() {
+        unsigned int curr_collisions = 0;
+        ScopeTable* temp = curr_scope_table;
+        while (temp != nullptr) {
+            curr_collisions += temp->collision_num;
+            temp = temp->getParentScope();
+        }
+
+        return (float) (curr_collisions + prev_collisions) / (curr_scope_table->scope_id * num_buckets);
     }
 
 
