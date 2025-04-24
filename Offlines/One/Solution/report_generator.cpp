@@ -1,8 +1,6 @@
 #include "utils.hpp"
 #include <iostream>
 
-#include <sys/stat.h>
-
 using namespace std;
 
 int main(int argc, char* argv[]) {
@@ -16,13 +14,9 @@ int main(int argc, char* argv[]) {
     unsigned int hash_func_count = 3;
     float mean_ratios[hash_func_count];
     streambuf* coutbuf = cout.rdbuf();
-    const string output_dir = "Outputs";
-
-    struct stat sb;
-    if (!(stat("Outputs", &sb) == 0 && S_ISDIR(sb.st_mode))) mkdir("Outputs", 0777);
 
     for (unsigned int i = 0; i < hash_func_count; i++) {
-        const string output_file_name = output_dir + '/' + hash_func_names[i] + ".txt";
+        const string output_file_name = hash_func_names[i] + ".txt";
         mean_ratios[i] = process_symbol_table(argv[1], output_file_name, i + 1);
     }
 
