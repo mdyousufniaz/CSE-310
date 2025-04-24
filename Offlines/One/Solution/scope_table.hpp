@@ -16,12 +16,10 @@ string get_tabs(unsigned int tab_len) {
 class ScopeTable {
 
     private:
-    static unsigned int scope_counter;
-
     SymbolInfo **hashmap;
     unsigned int num_buckets;
     ScopeTable* parent_scope;
-    unsigned int (*hashFunc) (string, unsigned int);
+    unsigned int (*hashFunc) (const string&, unsigned int);
 
     unsigned int hash(string name) {
         return hashFunc(name, num_buckets);
@@ -47,13 +45,13 @@ class ScopeTable {
     unsigned int scope_id;
     unsigned int collision_num = 0;
 
-    ScopeTable(unsigned int num_buckets, unsigned int hash_func_num, ScopeTable* parent)
+    ScopeTable(unsigned int num_buckets, unsigned int hash_func_num, unsigned int scope_id, ScopeTable* parent)
         :   num_buckets(num_buckets), parent_scope(parent) {
             this->hashmap = new SymbolInfo*[num_buckets];
             for (unsigned int i = 0; i < num_buckets; i++) hashmap[i] = nullptr;
 
             hashFunc = getHashFunc(hash_func_num);
-            scope_id = ++scope_counter;
+            this->scope_id = scope_id;
             cout << get_tabs(1) << "ScopeTable# " << scope_id  << " created" << endl;
         }
 
@@ -162,8 +160,6 @@ class ScopeTable {
 
     
 };
-
-unsigned int ScopeTable:: scope_counter = 0;
 
 
 #endif

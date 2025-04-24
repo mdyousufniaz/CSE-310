@@ -10,12 +10,13 @@ class SymbolTable {
     unsigned int num_buckets;
     unsigned int hash_func_num;
     unsigned int prev_collisions = 0;
+    unsigned int scope_table_counter = 1;
 
     public:
 
     SymbolTable(unsigned int num_buckets, unsigned int hash_func_num = 1) 
         :   num_buckets(num_buckets), hash_func_num(hash_func_num) {
-        curr_scope_table = new ScopeTable(num_buckets, hash_func_num, nullptr);
+        curr_scope_table = new ScopeTable(num_buckets, hash_func_num, scope_table_counter, nullptr);
     }
 
     ~SymbolTable() {
@@ -30,6 +31,7 @@ class SymbolTable {
         curr_scope_table = new ScopeTable(
             this->num_buckets,
             this->hash_func_num,
+            ++this->scope_table_counter,
             this->curr_scope_table
         );
     }
@@ -82,7 +84,7 @@ class SymbolTable {
             temp = temp->getParentScope();
         }
 
-        return (float) (curr_collisions + prev_collisions) / (curr_scope_table->scope_id * num_buckets);
+        return (float) (curr_collisions + prev_collisions) / (this->scope_table_counter * num_buckets);
     }
 
 

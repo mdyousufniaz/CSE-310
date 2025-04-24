@@ -16,6 +16,9 @@ void mismatchCommand(char cmd) {
 
 ofstream get_output_file(const string& output_file_name) {
     ofstream output_file(output_file_name);
+    if (!output_file.is_open()) {
+        cout << "error!" << endl;
+    }
     cout.rdbuf(output_file.rdbuf());
     return output_file;
 }
@@ -46,6 +49,7 @@ float process_symbol_table(
 
     while(getline(input_file, line)) {
         if (cmd == 'Q') break;
+        if (line[line.length() - 1] == ' ') line.erase(line.length() - 1, 1);
         cout << "Cmd " << command_num++ << ": " << line << endl;
 
         istringstream tokens(line);
@@ -54,9 +58,8 @@ float process_symbol_table(
 
         switch (cmd) {
             case 'I': {
-                string name, type, value;
-                tokens >> name;
-                tokens >> type;
+                string name, type;
+                tokens >> name >> type;
 
                 if (type == "FUNCTION") {
                     string ret_type, arg_type;
@@ -80,7 +83,7 @@ float process_symbol_table(
                     }
                     type.erase(type.length() - 1, 1);
                     type += "}";
-                } 
+                }
 
                 symbol_table->insert(new SymbolInfo(name, type));
                 break;
@@ -137,26 +140,9 @@ float process_symbol_table(
 
     delete symbol_table;
     input_file.close();
+    output_file.close();
 
     return mean_ratio;
-}
-
-void generate_report(const string& input_file_name, const string& output_dir) {
-    string hash_func_names[] = {
-        "SDBM_Hash"
-    };
-    unsigned int hash_func_count = 1;
-    float mean_ratios[hash_func_count];
-    streambuf* coutbuf = cout.rdbuf();
-
-    for (unsigned int i = 0; i < hash_func_count; i++) {
-        const string output_file_name = "" + hash_func_names[i] + ".csv";
-        ofstream output_file = get_output_file(output_file_name);
-        mean_ratios[i] = process_symbol_table(input_file_name, output_file_name, i + 1);
-    }
-
-    cout.rdbuf(coutbuf);
-    cout << mean_ratios[0] << endl;
 }
 
 #endif

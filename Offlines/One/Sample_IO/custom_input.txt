@@ -1,0 +1,85 @@
+11
+I a1 VAR
+I b12 VAR
+I c23 VAR
+I a12 VAR
+L a1
+I fun FUNCTION INT INT
+I fun FUNCTION INT INT
+L fun
+S
+I n0 NUMBER
+I n11 NUMBER
+I n22 NUMBER
+P C
+I pair STRUCT INT x INT y
+I unionish UNION INT u1 INT u2
+L x
+P A
+D n22
+D n99
+E
+S
+I <= RELOP
+I == RELOP
+I >= RELOP
+P C
+I <= RELOP
+L <=
+E
+S
+I foo STRUCT INT a FLOAT b
+I bar STRUCT INT a FLOAT b
+I baz STRUCT INT a FLOAT b
+P A
+D foo
+D bar
+L baz
+E
+S
+I num0 VAR
+I num11 VAR
+I num22 VAR
+I num33 VAR
+P A
+L num11
+E
+S
+I gamma VAR
+I delta VAR
+I epsilon VAR
+P C
+I fun2 FUNCTION FLOAT
+I fun3 FUNCTION CHAR INT
+L fun2
+L fun3
+D fun3
+P C
+E
+S
+I structA STRUCT INT p FLOAT q
+I unionB UNION CHAR c DOUBLE d
+P A
+L unionB
+D structA
+E
+S
+I z1 VAR
+I z12 VAR
+I z23 VAR
+I z34 VAR
+P C
+L z23
+D z34
+L z34
+E
+S
+I op_lt RELOP
+I op_gt RELOP
+I op_eq RELOP
+I op_neq RELOP
+P A
+L op_eq
+D op_neq
+E
+Q

@@ -1,3 +1,0 @@
-7
-I hello is_hy
-L hello
