@@ -1,4 +1,4 @@
-// Generated from d:/Git_Folders/CSE-310/Offlines/Three/Practice/antlr4-resources/antlr4-skeletons/java/C8086Lexer.g4 by ANTLR 4.13.1
+// Generated from /workspaces/CSE-310/Offlines/Three/Practice/antlr4-resources/antlr4-skeletons/java/C8086Lexer.g4 by ANTLR 4.13.1
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;

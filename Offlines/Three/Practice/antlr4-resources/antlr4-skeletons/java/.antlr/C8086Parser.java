@@ -1,4 +1,4 @@
-// Generated from d:/Git_Folders/CSE-310/Offlines/Three/Practice/antlr4-resources/antlr4-skeletons/java/C8086Parser.g4 by ANTLR 4.13.1
+// Generated from /workspaces/CSE-310/Offlines/Three/Practice/antlr4-resources/antlr4-skeletons/java/C8086Parser.g4 by ANTLR 4.13.1
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -146,6 +146,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_start; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterStart(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitStart(this);
+		}
 	}
 
 	public final StartContext start() throws RecognitionException {
@@ -188,6 +196,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_program; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterProgram(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitProgram(this);
+		}
 	}
 
 	public final ProgramContext program() throws RecognitionException {
@@ -260,6 +276,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_unit; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterUnit(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitUnit(this);
+		}
 	}
 
 	public final UnitContext unit() throws RecognitionException {
@@ -319,6 +343,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_func_declaration; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterFunc_declaration(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitFunc_declaration(this);
+		}
 	}
 
 	public final Func_declarationContext func_declaration() throws RecognitionException {
@@ -391,6 +423,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_func_definition; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterFunc_definition(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitFunc_definition(this);
+		}
 	}
 
 	public final Func_definitionContext func_definition() throws RecognitionException {
@@ -459,6 +499,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_parameter_list; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterParameter_list(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitParameter_list(this);
+		}
 	}
 
 	public final Parameter_listContext parameter_list() throws RecognitionException {
@@ -563,6 +611,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_compound_statement; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterCompound_statement(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitCompound_statement(this);
+		}
 	}
 
 	public final Compound_statementContext compound_statement() throws RecognitionException {
@@ -625,6 +681,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_var_declaration; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterVar_declaration(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitVar_declaration(this);
+		}
 	}
 
 	public final Var_declarationContext var_declaration() throws RecognitionException {
@@ -698,6 +762,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_declaration_list_err; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterDeclaration_list_err(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitDeclaration_list_err(this);
+		}
 	}
 
 	public final Declaration_list_errContext declaration_list_err() throws RecognitionException {
@@ -733,6 +805,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_type_specifier; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterType_specifier(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitType_specifier(this);
+		}
 	}
 
 	public final Type_specifierContext type_specifier() throws RecognitionException {
@@ -801,6 +881,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_declaration_list; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterDeclaration_list(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitDeclaration_list(this);
+		}
 	}
 
 	public final Declaration_listContext declaration_list() throws RecognitionException {
@@ -914,6 +1002,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_statements; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterStatements(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitStatements(this);
+		}
 	}
 
 	public final StatementsContext statements() throws RecognitionException {
@@ -1008,6 +1104,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_statement; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterStatement(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitStatement(this);
+		}
 	}
 
 	public final StatementContext statement() throws RecognitionException {
@@ -1155,6 +1259,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_expression_statement; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterExpression_statement(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitExpression_statement(this);
+		}
 	}
 
 	public final Expression_statementContext expression_statement() throws RecognitionException {
@@ -1212,6 +1324,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_variable; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterVariable(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitVariable(this);
+		}
 	}
 
 	public final VariableContext variable() throws RecognitionException {
@@ -1267,6 +1387,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_expression; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterExpression(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitExpression(this);
+		}
 	}
 
 	public final ExpressionContext expression() throws RecognitionException {
@@ -1320,6 +1448,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_logic_expression; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterLogic_expression(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitLogic_expression(this);
+		}
 	}
 
 	public final Logic_expressionContext logic_expression() throws RecognitionException {
@@ -1373,6 +1509,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_rel_expression; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterRel_expression(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitRel_expression(this);
+		}
 	}
 
 	public final Rel_expressionContext rel_expression() throws RecognitionException {
@@ -1426,6 +1570,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_simple_expression; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterSimple_expression(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitSimple_expression(this);
+		}
 	}
 
 	public final Simple_expressionContext simple_expression() throws RecognitionException {
@@ -1498,6 +1650,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_term; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterTerm(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitTerm(this);
+		}
 	}
 
 	public final TermContext term() throws RecognitionException {
@@ -1571,6 +1731,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_unary_expression; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterUnary_expression(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitUnary_expression(this);
+		}
 	}
 
 	public final Unary_expressionContext unary_expression() throws RecognitionException {
@@ -1645,6 +1813,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_factor; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterFactor(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitFactor(this);
+		}
 	}
 
 	public final FactorContext factor() throws RecognitionException {
@@ -1739,6 +1915,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_argument_list; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterArgument_list(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitArgument_list(this);
+		}
 	}
 
 	public final Argument_listContext argument_list() throws RecognitionException {
@@ -1793,6 +1977,14 @@ public class C8086Parser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_arguments; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).enterArguments(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof C8086ParserListener ) ((C8086ParserListener)listener).exitArguments(this);
+		}
 	}
 
 	public final ArgumentsContext arguments() throws RecognitionException {
