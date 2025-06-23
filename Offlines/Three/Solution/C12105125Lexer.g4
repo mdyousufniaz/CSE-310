@@ -1,4 +1,4 @@
-lexer grammar C8086Lexer;
+lexer grammar C12105125Lexer;
 
 @header {
 import java.io.BufferedWriter;
@@ -40,6 +40,7 @@ STRING
     ;
 
 WS : [ \t\r\n\f]+ -> skip ;
+
 
 // Keywords
 IF : 'if' { writeIntoLexLogFile("Line# " + getLine() + ": Token <IF> Lexeme " + getText()); };

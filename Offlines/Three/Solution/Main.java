@@ -7,8 +7,10 @@ public class Main {
     public static BufferedWriter parserLogFile;
     public static BufferedWriter errorFile;
     public static BufferedWriter lexLogFile;
+    public static SymbolTable symbolTable;
 
-    public static int syntaxErrorCount = 0;
+    public static int errorCount = 0;
+    public static boolean newScope = true;
 
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
@@ -33,18 +35,20 @@ public class Main {
         errorFile = new BufferedWriter(new FileWriter(errorFileName));
         lexLogFile = new BufferedWriter(new FileWriter(lexLogFileName));
 
+        symbolTable = new SymbolTable();
+
         // Create lexer and parser
         CharStream input = CharStreams.fromFileName(args[0]);
-        C8086Lexer lexer = new C8086Lexer(input);
+        C12105125Lexer lexer = new C12105125Lexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
-        C8086Parser parser = new C8086Parser(tokens);
+        C12105125Parser parser = new C12105125Parser(tokens);
 
         // Remove default error listener
         parser.removeErrorListeners();
 
         // Begin parsing
         ParseTree tree = parser.start();
-        parserLogFile.write("Parse tree: " + tree.toStringTree(parser) + "\n");
+        // parserLogFile.write("Parse tree: " + tree.toStringTree(parser) + "\n");
 
         // Close files
         parserLogFile.close();
