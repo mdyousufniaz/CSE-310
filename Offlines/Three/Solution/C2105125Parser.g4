@@ -1,7 +1,7 @@
-parser grammar C12105125Parser;
+parser grammar C2105125Parser;
 
 options {
-    tokenVocab = C12105125Lexer;
+    tokenVocab = C2105125Lexer;
 }
 
 @header {

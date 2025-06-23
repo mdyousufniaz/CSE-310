@@ -1,4 +1,4 @@
-lexer grammar C12105125Lexer;
+lexer grammar C2105125Lexer;
 
 @header {
 import java.io.BufferedWriter;
