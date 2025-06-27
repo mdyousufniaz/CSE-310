@@ -93,3 +93,11 @@ CONST_FLOAT
         writeIntoLexLogFile("Line# " + getLine() + ": Token <CONST_FLOAT> Lexeme " + getText());
     }
     ;
+
+INT_ARRAY
+    : 'INT_ARRAY' -> skip
+;
+
+FLOAT_ARRAY
+    : 'FLOAT_ARRAY'-> skip
+;
