@@ -10,10 +10,7 @@ options {
     import org.antlr.v4.runtime.Token;
     import java.util.LinkedList;
     import java.util.List;
-
 }
-
-
 
 @members {
     // helper to write into parserLogFile
@@ -49,7 +46,7 @@ options {
             + line
             + ": "
             + head
-            + ": "
+            + " : "
             + bodyName
             + "\n".repeat(2)
             + bodyText
@@ -79,7 +76,7 @@ options {
             + line
             + ": "
             + head
-            + ": "
+            + " : "
             + bodyName
             + "\n".repeat(2)
             + errorMessage
@@ -106,21 +103,25 @@ options {
         }
     }
 
-    DataType getDataType(String type) {
-        switch (type) {
-            case "int":
-                return DataType.INT;
-            case "float":
-                return DataType.FLOAT;
-            case "void":
-                return DataType.VOID;
-            case "int[]":
-                return DataType.INT_ARRAY;
-            case "float[]":
-                return DataType.FLOAT_ARRAY;
-        }
-        return DataType.UNKNOWN;
+    boolean insertId(Identifier Id) {
+        return Main.symbolTable.insertId(Id);
     }
+
+    void enterScope() {
+        Main.symbolTable.enterScope();
+    }
+
+    void exitScope() {
+        writeIntoParserLogFile(
+            Main.symbolTable.toString()
+        );
+        Main.symbolTable.exitScope();
+    }
+
+    Identifier getId(String idName) {
+        return Main.symbolTable.getId(idName);
+    }
+
 }   
 
 start
@@ -130,10 +131,6 @@ start
             $pm.line,
             "start",
             "program",
-            ""
-        );
-
-        writeIntoParserLogFile(
             Main.symbolTable.toString()
         );
 
@@ -150,7 +147,7 @@ start
 program returns [int line, String content] 
     : pm=program unit { 
         $line = $unit.line;
-        $content = $pm.content + $unit.content;
+        $content = $pm.content + '\n' + $unit.content;
 
         parseLog(
             $line,
@@ -162,7 +159,7 @@ program returns [int line, String content]
 
     | unit {
         $line = $unit.line;
-        $content = $unit.content + '\n';
+        $content = $unit.content;
 
         parseLog(
             $line,
@@ -216,11 +213,12 @@ unit returns [int line, String content]
 
 func_declaration returns [int line, String content]
     : ts=type_specifier ID LPAREN pl=parameter_list RPAREN sm=SEMICOLON 
-    {   
-        Main.symbolTable.insert(
-                new Function($ID.getText(), getDataType($ts.content), $pl.parameters)
-            );
-
+    {          
+        insertId(
+            new Identifier(
+                $ID.getText(), $ts.tokenType, $pl.parameters
+            )
+        );
 
         $content = $ts.content + ' ' + $ID.getText() + "();";
         $line = $sm.getLine();
@@ -234,9 +232,12 @@ func_declaration returns [int line, String content]
     }
     | ts=type_specifier ID LPAREN RPAREN sm=SEMICOLON 
     {
-         Main.symbolTable.insert(
-                new Function($ID.getText(), getDataType($ts.content), new LinkedList<Variable>())
-            );
+         insertId(
+            new Identifier(
+                $ID.getText(), $ts.tokenType, null
+            )
+        );
+
         $content = $ts.content + ' ' + $ID.getText() + "();";
         $line = $sm.getLine();
 
@@ -251,23 +252,16 @@ func_declaration returns [int line, String content]
     ;
 
 func_definition returns [int line, String content] 
-    : ts=type_specifier ID LPAREN pl=parameter_list RPAREN
+    : ts=type_specifier ID
     {
-        if(Main.symbolTable.getID($ID.getText()) == null) {
-            Main.symbolTable.insert(
-                new Function($ID.getText(), getDataType($ts.content), $pl.parameters)
-            );
-        }
+        Identifier funcid = new Identifier(
+            $ID.getText(), $ts.tokenType, null
+        );
 
-        Main.symbolTable.enterScope();
-        Main.newScope = false;
-        for (Variable param : $pl.parameters) {
-            if (param.getName() != null) {
-                Main.symbolTable.insert(param);
-            }
-        }
-    }
-     cs=compound_statement
+        insertId(funcid);
+    } 
+    LPAREN pl=parameter_list { funcid.parameters = $pl.parameters; } 
+    RPAREN cs=compound_statement [$pl.parameters]
     {
         $line = $cs.line;
         $content = $ts.content 
@@ -285,20 +279,13 @@ func_definition returns [int line, String content]
             $content
         );
     }
-    | ts=type_specifier ID LPAREN RPAREN
-    {
-        if(Main.symbolTable.getID($ID.getText()) == null) {
-            Main.symbolTable.insert(
-                new Function($ID.getText(), getDataType($ts.content), new LinkedList<Variable>())
-            );
-        }
-        Main.symbolTable.enterScope();
-        Main.newScope = false;
-        System.out.println("Entering new scope for function: " + $ID.getText());
-    }
-     cs=compound_statement
-    {
-        
+    | ts=type_specifier ID LPAREN RPAREN cs=compound_statement [null]
+    { 
+        insertId(
+            new Identifier(
+                $ID.getText(), $ts.tokenType, null
+            )
+        );
 
         $line = $cs.line;
         $content = $ts.content 
@@ -316,14 +303,13 @@ func_definition returns [int line, String content]
     }
     ;
 
-parameter_list returns [String content, List<Variable> parameters]
+parameter_list returns [String content, List<Identifier> parameters]
     : pl=parameter_list COMMA ts=type_specifier ID
     {
         $parameters = $pl.parameters;
         $parameters.add(
-            new Variable($ID.getText(), getDataType($ts.content))
+            new Identifier($ID.getText(), $ts.tokenType, null)
         );
-
         $content = $pl.content + ',' + $ts.content + ' '  + $ID.getText();
 
         parseLog(
@@ -336,12 +322,9 @@ parameter_list returns [String content, List<Variable> parameters]
     
     | pl=parameter_list COMMA ts=type_specifier
     {
-        $parameters = $pl.parameters;
-        $parameters.add(
-            new Variable(null, getDataType($ts.content))
-        );
         $content = $pl.content + ',' + $ts.content;
 
+        $parameters = null;
         parseLog(
             $ts.line,
             "parameter_list",
@@ -351,9 +334,9 @@ parameter_list returns [String content, List<Variable> parameters]
     }
     | ts=type_specifier ID
     {
-        $parameters = new LinkedList<Variable>();
+        $parameters = new LinkedList<>();
         $parameters.add(
-            new Variable($ID.getText(), getDataType($ts.content))
+            new Identifier($ID.getText(), $ts.tokenType, null)
         );
 
         $content = $ts.content + ' ' + $ID.getText();
@@ -367,11 +350,7 @@ parameter_list returns [String content, List<Variable> parameters]
     }
     | ts=type_specifier
     {
-        $parameters = new LinkedList<Variable>();
-        $parameters.add(
-            new Variable(null, getDataType($ts.content))
-        );
-
+        $parameters = null;
         $content = $ts.content;
 
         parseLog(
@@ -383,19 +362,22 @@ parameter_list returns [String content, List<Variable> parameters]
     }
     ;
 
-compound_statement returns [int line, String content]
+compound_statement [List<Identifier> parameters]
+    returns [int line, String content]
     : LCURL 
     { 
-        if (Main.newScope) {
-            Main.symbolTable.enterScope();
-            System.out.println("Entering new scope LCURL");
+        enterScope();
+        if (parameters != null) {
+            for (Identifier param : parameters) {
+                insertId(param);
+                System.out.println(param);
+            }
         }
-
     }
     ss=statements RCURL
     {   
         $line = $RCURL.getLine();
-        $content = "{\n" + $ss.content + "}\n";
+        $content = "{\n" + $ss.content + '\n' + "}";
 
         parseLog(
             $line,
@@ -404,16 +386,11 @@ compound_statement returns [int line, String content]
             $content
         );
 
-        writeIntoParserLogFile(
-            Main.symbolTable.toString()
-        );
-
-        Main.symbolTable.exitScope();
-        Main.newScope = true;
+        exitScope();
     }
     | LCURL
     { 
-        if (Main.newScope) Main.symbolTable.enterScope();
+        enterScope();
     }
      RCURL
     {
@@ -427,31 +404,31 @@ compound_statement returns [int line, String content]
             $content
         );
 
-        writeIntoParserLogFile(
-            Main.symbolTable.toString()
-        );
-
-        Main.symbolTable.exitScope();
-        Main.newScope = true;
+        exitScope();
     }
     ;
 
 var_declaration returns [int line, String content]
     : t=type_specifier dl=declaration_list sm=SEMICOLON
       {
-        for (String varName : $dl.varNames) {
-            String newVarName = varName;
-            String varType = $t.content;
-
-            if (varName.endsWith("[")) {
-                varType = $t.content + "[]";
-                newVarName = varName.substring(0, varName.length() - 1);
+        for (String idName : $dl.idNames) {
+            int dataType = $t.tokenType;
+            if (idName.endsWith("[]")) {
+                switch (dataType) {
+                    case INT:
+                        dataType = INT_ARRAY;
+                        break;
+                    case FLOAT:
+                        dataType = FLOAT_ARRAY;
+                        break;
+                }
             }
-
-            Main.symbolTable.insert(
-                new Variable(newVarName, getDataType(varType))
+            insertId(
+                new Identifier(idName, dataType, null)
             );
+            
         }
+
         String type = $t.content;
         $line = $sm.getLine();
         $content = type + ' ' + $dl.content + $sm.getText();
@@ -487,9 +464,10 @@ declaration_list_err
     ;
 
 type_specifier
-    returns [int line, String content]
+    returns [int line, String content, int tokenType]
     : t=(INT | FLOAT | VOID)
       {
+        $tokenType = $t.getType();
         $line = $t.getLine();
         $content = $t.getText();
         
@@ -502,12 +480,12 @@ type_specifier
       }
     ;
 
-declaration_list returns [String content, List<String> varNames]
+declaration_list returns [String content, List<String> idNames]
     : dl=declaration_list COMMA ID 
     {
-        $varNames = $dl.varNames;
-        $varNames.add($ID.getText());
         $content = $dl.content + "," + $ID.getText();
+        $idNames = $dl.idNames;
+        $idNames.add($ID.getText());
 
         parseLog(
             $ID.getLine(),
@@ -519,9 +497,10 @@ declaration_list returns [String content, List<String> varNames]
 
     | dl=declaration_list COMMA ID LTHIRD ci=CONST_INT RTHIRD 
     {
-        $varNames = $dl.varNames;
-        $varNames.add($ID.getText() + '[');
         $content = $dl.content + "," + $ID.getText() + '[' + $ci.getText() + ']';
+
+        $idNames = $dl.idNames;
+        $idNames.add($ID.getText() + "[]");    
 
         parseLog(
             $RTHIRD.getLine(),
@@ -532,19 +511,20 @@ declaration_list returns [String content, List<String> varNames]
     }
     | ID 
     {
-        $varNames = new LinkedList<String>();
-        $varNames.add($ID.getText());
         $content = $ID.getText();
-        if (Main.symbolTable.getID($ID.getText()) != null) {
-            String errorMessage = "Error at Line: "
-                + $ID.getLine()
-                + " : Multiple declaration of "
-                + $ID.getText();
-            writeIntoErrorFile(errorMessage + '\n');
-            writeIntoParserLogFile(errorMessage + '\n');
-            Main.errorCount++;
-        }
+        $idNames = new LinkedList<>();
 
+        if (getId($content) != null) { 
+            String errorMessage = "Error at line " + $ID.getLine() + " Multiple declaration of " + $content + '\n';
+
+            writeIntoErrorFile(errorMessage);
+            writeIntoParserLogFile(errorMessage);
+
+            Main.errorCount++;
+        } else {
+            $idNames.add($content);
+        }
+        
         parseLog(
             $ID.getLine(),
             "declaration_list",
@@ -554,9 +534,10 @@ declaration_list returns [String content, List<String> varNames]
     }
     | ID LTHIRD ci=CONST_INT RTHIRD
     {
-        $varNames = new LinkedList<String>();
-        $varNames.add($ID.getText() + '[');
         $content = $ID.getText() + '[' + $ci.getText() + ']';
+
+        $idNames = new LinkedList<>();
+        $idNames.add($ID.getText() + "[]");
 
         parseLog(
             $RTHIRD.getLine(),
@@ -583,7 +564,7 @@ statements returns [int line, String content]
     | ss=statements s=statement
     {
         $line = $s.line;
-        $content = $ss.content + $s.content;
+        $content = $ss.content + '\n' + $s.content;
 
         parseLog(
             $line,
@@ -598,7 +579,7 @@ statement returns [int line, String content]
     : vd=var_declaration
     {
         $line = $vd.line;
-        $content = $vd.content + '\n';
+        $content = $vd.content;
 
         parseLog(
             $line,
@@ -610,7 +591,7 @@ statement returns [int line, String content]
     | es=expression_statement
     {
         $line = $es.line;
-        $content = $es.content + '\n';
+        $content = $es.content;
 
         parseLog(
             $line,
@@ -619,7 +600,7 @@ statement returns [int line, String content]
             $content
         );
     }
-    | cs=compound_statement
+    | cs=compound_statement [null]
     {
         $line = $cs.line;
         $content = $cs.content;
@@ -694,7 +675,7 @@ statement returns [int line, String content]
     | RETURN e=expression sm=SEMICOLON
     {
         $line = $sm.getLine();
-        $content = "return " + $e.content + ";\n";
+        $content = "return " + $e.content + ";";
 
         parseLog(
             $line,
@@ -735,11 +716,6 @@ expression_statement returns [int line, String content]
 variable returns [int line, String content]
     : ID
     {
-        if (Main.symbolTable.getID($ID.getText()) == null) {
-            Main.symbolTable.insert(
-                new Variable($ID.getText(), DataType.UNKNOWN)
-            );
-        }
 
         $line = $ID.getLine();
         $content = $ID.getText();
@@ -754,11 +730,6 @@ variable returns [int line, String content]
 
     | ID LTHIRD e=expression RTHIRD
     {
-        if (Main.symbolTable.getID($ID.getText()) == null) {
-            Main.symbolTable.insert(
-                new Variable($ID.getText() + '[', DataType.UNKNOWN)
-            );
-        }
 
         $line = $RTHIRD.getLine();
         String index = $e.content;
@@ -796,21 +767,25 @@ expression returns [int line, String content]
     }
     | var=variable ASSIGNOP le=logic_expression
     {
-        // Variable variable = Main.symbolTable.getVariable($var.content);
-        // String leTypeStr = ($le.content.indexOf('.') != -1) ? "float" : "int";
-        // DataType leType = getDataType(leTypeStr);
-        // String errorName = null;
-
-        // if (variable.dataType != leType) errorName = "Type Mismatch";
 
         $line = $le.line;
         $content = $var.content + '=' + $le.content;
+
+        String errorName = null;
+        Identifier id = getId($var.content);
+        if (id != null) {
+            if (
+                (id.type == INT && !isInteger($le.content)) ||
+                (id.type == FLOAT && isInteger($le.content))
+            ) errorName = "Type Mismatch";
+        }
 
         parseLog(
             $line,
             "expression",
             "variable ASSIGNOP logic_expression",
-            $content
+            $content,
+            errorName
         );
     }
     ;

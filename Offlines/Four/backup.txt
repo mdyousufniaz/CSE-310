@@ -1,0 +1,669 @@
+parser grammar C8086Parser;
+
+options {
+    tokenVocab = C8086Lexer;
+}
+
+@header {
+import java.io.BufferedWriter;
+import java.io.IOException;
+
+import java.util.List;
+import java.util.LinkedList;
+
+import static java.lang.String.valueOf;
+import static java.lang.String.join;
+import static java.lang.Double.parseDouble;
+import static java.lang.Integer.parseInt;
+import static java.lang.Math.abs;
+
+import static java.nio.file.Paths.get;
+import static java.nio.file.Files.readString;
+
+}
+
+@members {
+    static boolean isInGlobal = true;
+    static int labelCount = 1;
+    static int offsetCount = 0;
+
+    // helper to write into assembly file
+    void writeIntoAssemblyFile(String... lines) {
+        for (String line: lines) {
+            try {
+                Main.assemblyFile.write(line);
+                Main.assemblyFile.newLine();
+                Main.assemblyFile.flush();
+            } catch (IOException e) {
+                System.err.println("Assembly file write error: " + e.getMessage()); 
+            }
+        }
+    }
+
+    void writeCode(String... codeLines) {
+        for (String codeLine: codeLines)
+            writeIntoAssemblyFile("    " + codeLine);
+    }
+
+    boolean insertId(String idName, String idType, String size) {
+        String offset;
+        if (isInGlobal) {
+            writeCode(idName + " DW " + size + " DUP (0000H)");
+            offset = idName;
+        } else {
+            int varSize = parseInt(size) * 2;
+            writeCode("SUB SP, " + varSize);
+            offsetCount -= varSize;
+            offset = valueOf(offsetCount);
+        }
+
+        return Main.symbolTable.insertId(idName, idType, offset);
+    }
+
+    Identifier getId(String idName) {
+        return Main.symbolTable.getId(idName);
+    }
+
+    String getOffset(String idName) {
+        Identifier id = Main.symbolTable.getId(idName);
+        String offset = id.offset;
+
+        boolean isNumeric;
+        try {
+            parseDouble(offset);
+            isNumeric = true;
+        } catch(NumberFormatException nfe) {
+            isNumeric = false;
+        }
+
+        if (!id.type.endsWith("[]"))
+            return isNumeric ?
+            "[BP" + (offset.startsWith("-") ? "" : '+') + offset + ']' : offset;
+
+        writeCode(
+            "POP BX",
+            "PUSH AX",
+            "MOV AX, 2",
+            "MUL BX",
+            "MOV BX, AX"
+        );
+
+        if (isNumeric)
+            writeCode(
+                "MOV AX, " + abs(offsetCount),
+                "SUB AX, BX",
+                "MOV BX, AX"
+            );
+        
+        writeCode("POP AX");
+        if (!isNumeric)
+            return offset + "[BX]";
+        
+        writeCode(
+            "MOV SI, BX",
+            "NEG SI"
+        );
+
+        return "[BP + SI]";
+    }
+
+    void writeLabel(String label) {
+        writeIntoAssemblyFile(label + ':');
+    }
+
+    void writeLabel() {
+        writeLabel("L" + labelCount++);
+    }
+
+    String newLabel() {
+        return "L" + labelCount++;
+    }
+
+    String mov(String src, String dest) {
+        return "MOV " + src + ", " + dest;
+    }
+
+    String mov(String src, String dest, int line) {
+        return mov(src, dest) + "       ; Line " + line;
+    }
+
+    String getCode(String... codeLines) {
+        return join(
+            "\n    ",
+            codeLines
+        );
+    }
+
+    String getPrintProc() {
+        try {
+            return readString(
+                get("../printProc.lib")
+            );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+}
+
+start
+    : 
+    {
+        writeIntoAssemblyFile(
+            ".MODEL SMALL",
+            ".STACK 1000H",
+            ".Data"
+        );
+        writeCode("number DB \"00000$\""); 
+    }
+    program
+    ;
+
+program : unit+
+    ;
+
+unit
+    : var_declaration
+    | func_declaration
+    | func_definition
+    ;
+
+func_declaration
+    : type_specifier ID LPAREN parameter_list? RPAREN SEMICOLON
+    ;
+
+func_definition
+    : type_specifier ID LPAREN
+    pl=parameter_list? RPAREN
+    {
+        if (isInGlobal) {
+            writeIntoAssemblyFile(".CODE");
+            isInGlobal = false;
+        }
+
+        String funcName = $ID.getText();
+        writeIntoAssemblyFile(funcName + " PROC");
+
+        if (funcName.equals("main")) {
+            writeCode(
+                mov("AX", "@DATA"),
+                mov("DS", "AX")
+            );
+        }
+
+        writeCode(
+            "PUSH BP",
+            mov("BP", "SP")
+        );
+        offsetCount = 0;
+    } 
+    cs=compound_statement [$pl.start == null ? null : $pl.pms]
+    {
+        if ($cs.retLabel != null)
+            writeLabel($cs.retLabel);
+
+        if (offsetCount != 0) {
+            writeCode("ADD SP, " + abs(offsetCount));
+            offsetCount = 0;
+        }
+            
+        writeCode("POP BP");
+
+        if (funcName.equals("main"))
+            writeCode(
+                mov("AX", "4CH"),
+                "INT 21H"
+            );
+        else {
+            int retNum = $pl.start == null ? 0 : $pl.pms.size() * 2;
+            writeCode("RET " + (retNum >= 2 ? retNum : ""));
+        }
+            
+        
+        writeIntoAssemblyFile(
+            funcName + " ENDP"
+        );
+        if (funcName.equals("main"))
+            writeIntoAssemblyFile(
+                getPrintProc(),
+                "END main"
+            );
+    }
+    ;
+
+parameter returns [String[] pm]
+    : ts=type_specifier id=ID?
+    {
+        if ($id != null) {
+            $pm = new String[] {
+                $id.getText(),
+                $ts.tokenType
+            };
+        }
+    }
+    ;
+
+parameter_list
+    returns [List<String[]> pms]
+    : p1=parameter
+    {
+        $pms = new LinkedList<String[]>();
+        if ($p1.pm != null)
+            $pms.add($p1.pm);
+    }
+    (
+        COMMA p2=parameter
+        {
+            if ($p2.pm != null)
+                $pms.add($p2.pm);
+        }
+    )*
+    ;
+
+compound_statement [List<String[]> pms]
+    returns [String retLabel]
+    : LCURL
+    {
+        Main.symbolTable.enterScope();
+        if ($pms != null) {
+            int tempOffset = 4;
+            for (int i = $pms.size() - 1; i >= 0; i--) {
+                String[] pm = $pms.get(i);
+
+                Main.symbolTable.insertId(
+                    pm[0],
+                    pm[1],
+                    valueOf(tempOffset)
+                );
+                tempOffset += 2;
+            }
+        }
+            
+    }
+    ss+=statement [null]* RCURL
+    {
+        if ($ss != null) {
+            for (StatementContext ctx : $ss) {
+                if (ctx.retLabel != null) {
+                    $retLabel = ctx.retLabel;
+                    break;
+                }
+            }
+        }
+        Main.symbolTable.exitScope();
+    }
+    ;
+
+var_declaration
+    : t=type_specifier dl=declaration_list [$t.tokenType] sm=SEMICOLON
+    ;
+
+type_specifier
+    returns [String tokenType]
+    : t=(INT | FLOAT | VOID)
+    {
+        $tokenType = $t.getText();
+    }
+    ;
+
+declaration_list [String idType] 
+    : declaration_item [$idType] (COMMA declaration_item [$idType])*
+    ;
+
+declaration_item [String idType]
+    : ID (LTHIRD ci=CONST_INT RTHIRD)?
+    {
+        insertId(
+            $ID.getText(),
+            $idType + (($ci == null) ? "" : "[]"),
+            ($ci == null) ? "1" : $ci.getText()
+        );
+    }
+    ;
+
+statement [String nextLabel]
+    returns [String retLabel]
+    :
+    var_declaration
+    | es=expression_statement
+    | compound_statement [null]
+    | FOR LPAREN es1=expression_statement
+    {
+        String condLabel = newLabel();
+        writeLabel(condLabel);
+    }
+    es2=expression_statement
+    {
+        String nextLbl = newLabel();
+        writeLabel(nextLbl);
+    }
+    e=expression
+    {
+        writeCode("JMP " + condLabel);
+        writeLabel($es2.trueLabel);
+    }
+    RPAREN 
+    statement [null]
+    {
+        writeCode("JMP " + nextLbl);
+        writeLabel($es2.falseLabel);
+    }
+    | IF LPAREN e=expression
+    {
+        writeLabel($e.trueLabel);
+        boolean isFirstStmt = $nextLabel == null;
+        if (isFirstStmt)
+            $nextLabel = newLabel();
+    }
+    RPAREN
+    s1=statement [$nextLabel]
+    (
+        ELSE
+        {
+            writeCode("JMP " + ($nextLabel));
+            writeLabel($e.falseLabel);
+        }
+        s2=statement [$nextLabel]
+    )?
+    {
+        if ($s2.start == null) 
+            writeLabel($e.falseLabel);
+        else if (isFirstStmt) 
+            writeLabel($nextLabel);
+    }
+    | WHILE LPAREN
+    {
+        String condLabel = newLabel();
+        writeLabel(condLabel);
+    }
+    e=expression RPAREN
+    {
+        String trueLabel, falseLabel;
+        if ($e.trueLabel == null) {
+            trueLabel = newLabel();
+            falseLabel = newLabel();
+
+            writeCode(
+                "CMP AX, 0",
+                "JNE " + trueLabel,
+                "JMP " + falseLabel
+            );
+        } else {
+            trueLabel = $e.trueLabel;
+            falseLabel = $e.falseLabel;
+        }
+        writeLabel(trueLabel);
+    }
+    statement [null]
+    {
+        writeCode("JMP " + condLabel);
+        writeLabel(falseLabel);
+    }
+    | PRINTLN LPAREN ID RPAREN sm=SEMICOLON
+    {
+        writeCode(
+            mov("AX", getOffset($ID.getText())),
+            "CALL print_output",
+            "CALL new_line"
+        );
+    }
+    | RETURN expression sm=SEMICOLON
+    {
+        $retLabel = newLabel();
+        writeCode("JMP " + $retLabel);
+    }
+    ;
+
+expression_statement 
+    returns [String trueLabel, String falseLabel]
+    : e=expression? SEMICOLON
+    {
+        if ($e.start != null) {
+            $trueLabel = $e.trueLabel;
+            $falseLabel = $e.falseLabel;
+        }
+    }
+    ;
+
+variable returns [String idName, int line]
+    : ID (LTHIRD e=expression RTHIRD)?
+    {
+        $idName = $ID.getText();
+        $line = $ID.getLine();
+        if ($e.start != null)
+            writeCode("PUSH AX");
+    }
+    ;
+
+expression
+    returns [String trueLabel, String falseLabel]
+    : (v=variable ASSIGNOP)? le=logic_expression
+    {
+        $trueLabel = $le.trueLabel;
+        $falseLabel = $le.falseLabel;
+        if ($trueLabel != null) {
+            String nextLabel = newLabel();
+
+            writeLabel($trueLabel);
+            writeCode(
+                "MOV AX, 1",
+                "JMP " + nextLabel
+            );
+            writeLabel($falseLabel);
+            writeCode("MOV AX, 0");
+            writeLabel(nextLabel);
+        }
+
+        if ($v.start != null) {
+            writeCode(mov(getOffset($v.idName), "AX"));
+        }
+    }
+    ;
+
+logic_expression
+    returns [String trueLabel, String falseLabel]
+    : (re1=rel_expression lo=LOGICOP)?
+    {
+
+        if ($re1.start != null) {
+            if ($re1.trueLabel != null) {
+                String re1NextLabel = newLabel();
+                
+                writeLabel($re1.trueLabel);
+                writeCode(
+                    "MOV AX, 1",
+                    "JMP " + re1NextLabel
+                );
+                writeLabel($re1.falseLabel);
+                writeCode("MOV AX, 0");
+                writeLabel(re1NextLabel);
+            }
+            
+            $trueLabel = newLabel();
+            $falseLabel = newLabel();
+            String nextLabel = newLabel();
+
+            writeCode(
+                "CMP AX, 0",
+                "JNE " + ($lo.getText().equals("||") ? $trueLabel : nextLabel),
+                "JMP " + ($lo.getText().equals("||") ? nextLabel : $falseLabel)
+            );
+            writeLabel(nextLabel);
+        }
+    }
+    re2=rel_expression
+    {
+        if ($re1.start != null) {
+            if ($re2.trueLabel != null) {
+                String re2NextLabel = newLabel();
+
+                writeLabel($re2.trueLabel);
+                writeCode(
+                    "MOV AX, 1",
+                    "JMP " + re2NextLabel
+                );
+                writeLabel($re2.falseLabel);
+                writeCode("MOV AX, 0");
+                writeLabel(re2NextLabel);
+            }
+
+            writeCode(
+                "CMP AX, 0",
+                "JNE " + $trueLabel,
+                "JMP " + $falseLabel
+            );
+        } else {
+            $trueLabel = $re2.trueLabel;
+            $falseLabel = $re2.falseLabel;
+        }
+    }
+    ;
+
+rel_expression
+    returns [String trueLabel, String falseLabel]
+    : (se1=simple_expression ro=RELOP)?
+    {
+        if ($se1.start != null) {
+            writeCode(mov("DX", "AX"));
+        }
+    }
+    se2=simple_expression
+    {
+        if ($se1.start != null) {
+
+            String ins = "J";
+            $trueLabel = newLabel();
+            $falseLabel = newLabel();
+
+            switch ($ro.getText()) {
+                case "<":
+                    ins += "L";
+                    break;
+                case "<=": 
+                    ins += "LE";
+                    break;
+                case ">":
+                    ins += "G";
+                    break;
+                case ">=": 
+                    ins += "GE";
+                    break;
+                case "!=": 
+                    ins += "NE";
+                    break;
+                case "==":
+                    ins += "E";
+                    break;
+            }
+
+            writeCode(
+                "CMP DX, AX",
+                ins + ' ' + $trueLabel,
+                "JMP " + $falseLabel
+            );
+        }
+        
+    }
+    ;
+
+simple_expression
+    : se=simple_expression
+    {
+        writeCode(
+            "PUSH AX"
+        );
+
+    }
+    ao=ADDOP t=term
+    {
+        writeCode(
+            "POP DX",
+            ($ao.getText().equals("+") ? "ADD" : "SUB")
+            + " DX, AX",
+            "MOV AX, DX"
+        );
+    }
+    | t=term
+    ;
+
+term
+    : t=term
+    {
+        writeCode("PUSH AX");
+    }
+    mo=MULOP ue=unary_expression
+    {
+        writeCode(
+            "MOV CX, AX",
+            "POP AX",
+            "CWD",
+            ($mo.getText().equals("*") ? "MUL" : "DIV")
+            + " CX"
+        );
+
+        if ($mo.getText().equals("%"))
+            writeCode("MOV AX, DX");
+    }
+    | ue=unary_expression
+    ;
+
+unary_expression
+    : pre=(ADDOP | NOT) ue=unary_expression
+    {
+        writeCode(
+            "NEG AX"
+        );
+    }
+    | f=factor
+    ;
+
+factor
+    : v=variable do=(INCOP | DECOP)?
+    {
+
+        writeCode(
+            mov("AX", getOffset($v.idName))
+        );
+
+        if ($do != null) {
+            writeCode(
+                "PUSH AX",
+                ($do.getText().equals("++") ? "INC" : "DEC")
+                + " AX",
+                mov(getOffset($v.idName), "AX"),
+                "POP AX"
+            ); 
+        }
+            
+    }
+    | ID LPAREN argument_list RPAREN
+    {
+        writeCode("CALL " + $ID.getText());
+    }
+    | LPAREN expression RPAREN
+    | cl=(CONST_INT | CONST_FLOAT)
+    {
+        writeCode(mov("AX", $cl.getText(), $cl.getLine()));
+    }
+    ;
+
+argument_list
+    : arguments
+    | /* empty */
+    ;
+
+arguments
+    : logic_expression
+    {
+        writeCode("PUSH AX");
+    }
+    (
+        COMMA logic_expression
+        {
+            writeCode("PUSH AX");
+        }
+    )*
+    
+    ;

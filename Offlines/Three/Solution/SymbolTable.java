@@ -1,65 +1,33 @@
 import java.util.List;
 import java.util.LinkedList;
 import java.util.Stack;
+import java.lang.Math;
+
+import org.antlr.v4.runtime.Token;
 
 
-abstract class Idenitifier {
-    private String name;
+class Identifier {
+    String name;
+    int type;
+    List<Identifier> parameters;
 
-    Idenitifier(String name) {
+    Identifier(String name, int type, List<Identifier> parameters) {
         this.name = name;
+        this.type = type;
+        this.parameters = parameters;
     }
-
-    String getName() {
-        return this.name;
-    }
-
-    abstract IDType getIDType();
 
     @Override
     public String toString() {
-        return "< " + this.name + " , " + "ID" + " >";
-    }
-
-}
-
-class Variable extends Idenitifier {
-    public DataType dataType;
-    Variable(String name, DataType dataType) {
-        super(name);
-        this.dataType = dataType;
-    }
-
-    @Override
-    IDType getIDType() {
-        return IDType.VARIABLE;
-    }
-}
-
-class Function extends Idenitifier {
-    DataType returnType;
-    List<Variable> parameters;
-
-    Function(String name, DataType returnType, List<Variable> parameters) {
-        super(name);
-        this.returnType = returnType;
-        this.parameters = new LinkedList<Variable>();
-        if (parameters != null) {
-            this.parameters.addAll(parameters);
-        }
-    }
-
-    @Override
-    IDType getIDType() {
-        return IDType.FUNCTION;
+        return " < " + this.name + " : ID >";
     }
 }
 
 class ScopeTable {
     private static final int numBuckets = 7;
 
-    private List<Idenitifier>[] identifiers;
-    String scopeID;
+    private List<Identifier>[] identifiers;
+    String scopeId;
     ScopeTable parentScope;
 
     private static int SDBMHash(String id) {
@@ -68,86 +36,57 @@ class ScopeTable {
             hash = c + (hash << 6) + (hash << 16) - hash;
         }
 
-        return (int) ((hash + numBuckets) % numBuckets);
+        return Math.floorMod(hash, numBuckets);
     }
 
     @SuppressWarnings("unchecked")
-    ScopeTable(String scopeID, ScopeTable parentScope) {
-        this.identifiers = (List<Idenitifier>[]) new LinkedList[numBuckets];
+    ScopeTable(String scopeId, ScopeTable parentScope) {
+        this.identifiers = (List<Identifier>[]) new LinkedList[numBuckets];
 
         for (byte i = 0; i < numBuckets; i++) {
-            this.identifiers[i] = new LinkedList<Idenitifier>();
+            this.identifiers[i] = new LinkedList<Identifier>();
         }
-        this.scopeID = scopeID;
+        this.scopeId = scopeId;
         this.parentScope = parentScope;
     }
 
-    boolean hasID(Idenitifier ID) {
-        int hashIndex = SDBMHash(ID.getName());
-        List<Idenitifier> idList = this.identifiers[hashIndex];
-
-        for (Idenitifier id: idList) {
-            if (id.getName().equals(ID.getName())) return true;
-        }
-        return false;
+    private List<Identifier> getIdList(String idName) {
+        int hashIndex = SDBMHash(idName);
+       return this.identifiers[hashIndex];
     }
 
-    boolean insert(Idenitifier ID) {
-        if (hasID(ID)) return false;
+    boolean insertId(Identifier id) {
+        if (getId(id.name) != null) return false;
 
-        int hashIndex = SDBMHash(ID.getName());
-        this.identifiers[hashIndex].add(ID);
+        getIdList(id.name).add(id);
         return true;
     }
 
-    Idenitifier getID(String idName) {
-        int hashIndex = SDBMHash(idName);
-        List<Idenitifier> idList = this.identifiers[hashIndex];
+    Identifier getId(String idName) {
+        List<Identifier> idList = getIdList(idName);
+        if (idList.isEmpty()) return null;
 
-        for (Idenitifier id: idList) {
-            if (id.getIDType() == IDType.FUNCTION) {
-                for (Variable param: ((Function) id).parameters) {
-                    if (param.getName().equals(idName)) return param;
-                }
-            }
-
-            if (id.getName().equals(idName)) return id;
+        for (Identifier id: idList) {
+            if (id.name.equals(idName)) return id;
         }
         return null;
     }
-
-    Variable getVariable(String varName) {
-        Idenitifier id = getID(varName);
-        if (id != null && id.getIDType() == IDType.VARIABLE) {
-            return (Variable) id;
-        }
-        return null;
-    }
-    
-    Function getFunction(String funcName) {
-        Idenitifier id = getID(funcName);
-        if (id != null && id.getIDType() == IDType.FUNCTION) {
-            return (Function) id;
-        }
-        return null;
-    }
-
 
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder(
             "ScopeTable # "
-            + this.scopeID
+            + this.scopeId
             + '\n'
         );
 
         for (byte i = 0; i < numBuckets; i++) {
-            List<Idenitifier> idList = this.identifiers[i];
+            List<Identifier> idList = this.identifiers[i];
             if (idList.isEmpty()) continue;
 
             sb.append(i + " -->");
-            for (Idenitifier id: idList) sb.append(" " + id.toString());
+            for (Identifier id: idList) sb.append(id.toString());
             sb.append('\n');
         }
         return sb.toString();
@@ -168,34 +107,33 @@ class SymbolTable {
     void enterScope() {
         Integer currChildCount = this.childCounts.peek();
         ScopeTable topScope = new ScopeTable(
-            this.currScope.scopeID + "." + currChildCount,
+            this.currScope.scopeId + "." + currChildCount,
             this.currScope
         );
-        System.err.println(topScope.scopeID);
         
         this.currScope = topScope;
         this.childCounts.push(1);
+        System.out.println(childCounts + this.currScope.scopeId);
     }
 
     void exitScope() {
-        if (this.currScope.parentScope == null) {
-            return;
-        }
+        if (this.currScope.parentScope == null)  return;
+
         this.currScope = this.currScope.parentScope;
         this.childCounts.pop();
         Integer currChildCount = this.childCounts.pop();
         this.childCounts.push(currChildCount + 1);
     }
 
-    public boolean insert(Idenitifier ID) {
-        return this.currScope.insert(ID);
+    public boolean insertId(Identifier ID) {
+        return this.currScope.insertId(ID);
     }
 
-    public Idenitifier getID(String idName) {
+    public Identifier getId(String idName) {
         ScopeTable tempScope = this.currScope;
 
         while (tempScope != null) {
-            Idenitifier id = tempScope.getID(idName);
+            Identifier id = tempScope.getId(idName);
             if (id != null) return id;
             tempScope = tempScope.parentScope;
         }
@@ -209,6 +147,7 @@ class SymbolTable {
         StringBuilder sb = new StringBuilder();
 
         while (tempScope != null) {
+            System.out.println(tempScope.scopeId);
             sb.append(tempScope.toString());
             tempScope = tempScope.parentScope;
         }

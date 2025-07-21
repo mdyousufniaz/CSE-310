@@ -1,4 +1,4 @@
-lexer grammar C2105125Lexer;
+lexer grammar C8086Lexer;
 
 @header {
 import java.io.BufferedWriter;
@@ -40,7 +40,6 @@ STRING
     ;
 
 WS : [ \t\r\n\f]+ -> skip ;
-
 
 // Keywords
 IF : 'if' { writeIntoLexLogFile("Line# " + getLine() + ": Token <IF> Lexeme " + getText()); };
@@ -93,11 +92,3 @@ CONST_FLOAT
         writeIntoLexLogFile("Line# " + getLine() + ": Token <CONST_FLOAT> Lexeme " + getText());
     }
     ;
-
-INT_ARRAY
-    : 'INT_ARRAY' -> skip
-;
-
-FLOAT_ARRAY
-    : 'FLOAT_ARRAY'-> skip
-;
